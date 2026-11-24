@@ -1,0 +1,10 @@
+# TaskWeave workflow
+FIXED|Checkout|2|
+FIXED|Lint|3|Checkout
+FIXED|Build|8|Checkout
+FIXED|Unit tests A|6|Build
+FIXED|Unit tests B|10|Build
+FIXED|Unit tests C|4|Build
+FIXED|Package|5|Build
+FIXED|Integration|12|Unit tests A,Unit tests B,Unit tests C
+FIXED|Deploy|4|Integration,Package,Lint
