@@ -1,0 +1,51 @@
+TaskWeave - How to run
+======================
+
+Requirements
+- Eclipse with JDK 21 or newer
+- JavaFX SDK (same major version as your JDK is easiest)
+  Download: https://gluonhq.com/products/javafx/
+  Pick your OS and CPU (Apple M chips: macOS aarch64), then unzip it.
+
+1. Import the project
+   File > Import > General > Existing Projects into Workspace
+   Select the TaskWeave folder and click Finish.
+
+2. Add JavaFX to Eclipse (one time)
+   Eclipse > Settings (Windows: Window > Preferences)
+   > Java > Build Path > User Libraries > New...
+   Name it exactly: JavaFX
+   Select it > Add External JARs... > select all .jar files in javafx-sdk/lib
+
+3. If the project still shows errors
+   Right-click TaskWeave > Build Path > Configure Build Path > Libraries
+   Select "Classpath" > Add Library... > User Library > check JavaFX > Finish
+
+4. Run the app
+   Open src/taskweave/ui/Launcher.java
+   Right-click > Run As > Java Application
+   (Run Launcher, not MainApp.)
+
+   macOS only: if no window appears, stop the program (red square in
+   the Console), then open Run > Run Configurations > Launcher > Arguments:
+   - UNCHECK "Use the -XstartOnFirstThread argument when launching with SWT"
+   - In VM arguments, add: --enable-native-access=ALL-UNNAMED
+   Click Apply, then Run.
+
+5. Things to try
+   - Change "Rule" and "Workers" in the toolbar and watch the schedule change
+   - Open > samples/ci_pipeline.txt
+   - Click Sample, then link: Wash waits for Stir-fry -> the cycle turns red
+   - Click Undo to fix it
+
+Console tests (no JavaFX needed)
+   Run each of these as a Java Application:
+   taskweave.model.ModelDemo
+   taskweave.graph.GraphDemo
+   taskweave.scheduler.SchedulerDemo
+   taskweave.storage.StorageDemo
+   Each one ends with "N passed, 0 failed".
+
+macOS note
+   If an error says a .dylib file "cannot be opened", run this in Terminal:
+   xattr -dr com.apple.quarantine <path to your javafx-sdk folder>

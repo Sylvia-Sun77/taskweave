@@ -1,0 +1,6 @@
+# TaskWeave workflow
+FIXED|Wash|5|
+FIXED|Chop|10|Wash
+FIXED|Stir-fry|10|Chop
+FIXED|Rice|25|
+FIXED|Soup|40|
