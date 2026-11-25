@@ -8,6 +8,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -84,6 +85,9 @@ public class TaskEditorPane extends VBox {
 
         linkTaskBox.setPromptText("Task");
         linkPrereqBox.setPromptText("Must wait for");
+        keepPromptText(prereqBox);
+        keepPromptText(linkTaskBox);
+        keepPromptText(linkPrereqBox);
         Button linkBtn = new Button("Link");
         linkBtn.setOnAction(e -> link());
         Button unlinkBtn = new Button("Unlink");
@@ -117,6 +121,27 @@ public class TaskEditorPane extends VBox {
         prereqBox.getItems().setAll(withNone);
         linkTaskBox.getItems().setAll(names);
         linkPrereqBox.getItems().setAll(names);
+    }
+
+    // fix: a ComboBox only shows its prompt text before anything is picked,
+    // once a value was picked and then cleared (setValue(null) after "Add task", or refresh() replacing the items),
+    // the box turns blank instead of showing "Depends on" / "Task" / "Must wait for" again
+    // so replace the button cell (the part that shows the current value) with one that falls back to the prompt text
+    private static void keepPromptText(ComboBox<String> box) {
+        box.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);  // keep the normal ListCell behavior first
+                if (empty || item == null) {
+                    // nothing picked: show the prompt in gray, like the default prompt text
+                    setText(box.getPromptText());
+                    setTextFill(Color.GRAY);
+                } else {
+                    setText(item);
+                    setTextFill(Color.BLACK);
+                }
+            }
+        });
     }
 
     // show "Minutes" for a fixed task, or "Units x Minutes per unit" for a per-unit task
