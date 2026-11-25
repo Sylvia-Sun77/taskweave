@@ -124,18 +124,26 @@ public class MainApp extends Application {
 
     // every edit goes through here: run it, keep a snapshot for undo, redraw everything.
     // returns false if the edit was rejected
+    // Consumer<Workflow>: the edit is passed in as a lambda, e.g. w -> w.addTask(task),
+    // so add, delete, link and unlink all reuse this one method (no repeated undo/redraw code)
     public boolean applyChange(String doneMessage, Consumer<Workflow> change) {
+        // take the snapshot before the change, so a failed edit can be put back
         Workflow before = workflow.copy();
         try {
-            change.accept(workflow);
+            change.accept(workflow);    // run the lambda on the current workflow
         } catch (IllegalArgumentException ex) {
+            // the model rejected the edit (e.g. a duplicate name), go back to the state before it
+            // (the edit may have changed part of the workflow before it threw)
             workflow = before;
             refreshAll();
             showStatus(ex.getMessage(), true);
             return false;
         }
+        // only a successful edit goes into the undo history
         history.beforeChange(before);
         ValidationResult r = refreshAll();
+        // the edit worked, but it can still make the workflow invalid (e.g. a new cycle),
+        // so show the checker's message in red instead of "done"
         if (r.isValid()) {
             showStatus(doneMessage, false);
         } else {
@@ -144,7 +152,9 @@ public class MainApp extends Application {
         return true;
     }
 
+    // used by New, Sample and Open
     private void replaceWorkflow(Workflow next, String message) {
+        // keep the old workflow in history, so Undo can bring it back after New or Open by mistake
         history.beforeChange(workflow);
         workflow = next;
         refreshAll();
@@ -161,6 +171,7 @@ public class MainApp extends Application {
         } else if (!r.isValid()) {
             scheduleView.showMessage("Fix the dependencies before running");
         } else {
+            // run every rule (not only the picked one), so the comparison line can show both totals
             List<ScheduleResult> results = Simulator.runAll(workflow, strategies, workerBox.getValue());
             scheduleView.show(results.get(selectedRuleIndex()), results);
         }
@@ -212,6 +223,7 @@ public class MainApp extends Application {
     private void open() {
         FileChooser chooser = makeChooser("Open workflow");
         File f = chooser.showOpenDialog(stage);
+        // null: the user closed the dialog or clicked Cancel, so do nothing
         if (f == null) {
             return;
         }
@@ -241,6 +253,8 @@ public class MainApp extends Application {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(title);
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("TaskWeave workflow (*.txt)", "*.txt"));
+        // start in the samples folder when it exists
+        // (relative path, works when the program runs from the project folder, e.g. from Eclipse)
         File samples = new File("samples");
         if (samples.isDirectory()) {
             chooser.setInitialDirectory(samples);

@@ -9,6 +9,9 @@ public class PerUnitTask extends Task {
         super(name);
         checkPositive(units, "Units");
         checkPositive(minutesPerUnit, "Minutes per unit");
+        // (long) before multiplying, otherwise int * int overflows first and the check sees a wrong number
+        // e.g. 100000 * 100000 as int = 1410065408, as long = 10000000000
+        checkMaxDuration((long) units * minutesPerUnit);
         this.units = units;
         this.minutesPerUnit = minutesPerUnit;
     }

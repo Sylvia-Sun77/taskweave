@@ -5,8 +5,9 @@ public class FixedTask extends Task {
     private final int minutes;
 
     public FixedTask(String name, int minutes) {
-        super(name);
+        super(name);    // Task checks the name
         checkPositive(minutes, "Minutes");
+        checkMaxDuration(minutes);
         this.minutes = minutes;
     }
 
