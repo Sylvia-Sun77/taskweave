@@ -119,7 +119,9 @@ public class TaskEditorPane extends VBox {
         linkPrereqBox.getItems().setAll(names);
     }
 
+    // show "Minutes" for a fixed task, or "Units x Minutes per unit" for a per-unit task
     private void updateDurationFields() {
+        // PER_UNIT.equals(...) instead of getValue().equals(...): no NullPointerException if nothing is picked
         if (PER_UNIT.equals(typeBox.getValue())) {
             durationRow.getChildren().setAll(unitsField, new Label("x"), perUnitField);
         } else {
@@ -128,8 +130,10 @@ public class TaskEditorPane extends VBox {
     }
 
     private void addTask() {
-        error.setText("");
+        error.setText("");  // clear the old error message first
         String name = nameField.getText().trim();
+        // validation: check here first to show a short message next to the form,
+        // the model checks the same things again in case another class calls it
         if (name.isEmpty()) {
             error.setText("Enter a task name");
             return;
@@ -155,7 +159,10 @@ public class TaskEditorPane extends VBox {
             return;
         }
 
+        // a lambda can only use variables that never change after being set (effectively final),
+        // task is assigned inside the if/else, so copy it into a new variable first
         Task newTask = task;
+        // only clear the form when the task was really added, so the user can fix a typo otherwise
         if (app.applyChange("Added " + name, w -> w.addTask(newTask))) {
             nameField.clear();
             minutesField.clear();
@@ -165,11 +172,13 @@ public class TaskEditorPane extends VBox {
         }
     }
 
+    // read a whole number > 0 from a text field, or throw with a message for the error label
     private int readPositive(TextField field, String label) {
-        int value;
+        int value;      // declared outside of try, so it can be used after the try catch block
         try {
             value = Integer.parseInt(field.getText().trim());
         } catch (NumberFormatException e) {
+            // e.g. "", "abc", "2.5", or a number too big for int (> 2,147,483,647)
             throw new IllegalArgumentException(label + " must be a whole number");
         }
         if (value <= 0) {

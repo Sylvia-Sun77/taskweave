@@ -49,6 +49,18 @@ public class StorageDemo {
             check("bad line is reported with its line number", e.getMessage().startsWith("Line 2"));
         }
 
+        // a file edited by hand: spaces around names and an extra comma at the end
+        File spaced = File.createTempFile("taskweave-spaced", ".txt");
+        spaced.deleteOnExit();
+        try (PrintWriter out = new PrintWriter(spaced, StandardCharsets.UTF_8)) {
+            out.println("FIXED| Wash |5|");
+            out.println("FIXED|Chop|10| Wash ,");
+        }
+        Workflow trimmed = WorkflowFileIO.load(spaced);
+        check("spaces around a name are trimmed", trimmed.contains("Wash"));
+        check("prerequisite with spaces and extra comma still found",
+                trimmed.getTask("Chop").getPrerequisites().equals(java.util.List.of("Wash")));
+
         // undo and redo
         UndoManager history = new UndoManager();
         Workflow current = SampleWorkflows.cooking();

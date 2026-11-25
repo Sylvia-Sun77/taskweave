@@ -30,6 +30,12 @@ public class ModelDemo {
         expectError("name with | is rejected", () -> new FixedTask("a|b", 3));
         expectError("zero minutes is rejected", () -> new FixedTask("Tea", 0));
 
+        // edge cases of the 7-day limit (Task.MAX_MINUTES = 10080)
+        check("exactly 7 days is allowed", new FixedTask("Week", Task.MAX_MINUTES).getDuration() == 10080);
+        expectError("more than 7 days is rejected", () -> new FixedTask("Long", Task.MAX_MINUTES + 1));
+        // 100000 * 100000 overflows int, the check must still catch it
+        expectError("per-unit overflow is rejected", () -> new PerUnitTask("Big", 100000, 100000));
+
         Workflow c = w.copy();
         c.removeTask("Chop");
         check("copy is independent of the original", w.size() == 5 && c.size() == 4);

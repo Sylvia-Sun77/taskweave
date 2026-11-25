@@ -19,6 +19,8 @@ import taskweave.model.Workflow;
 public class WorkflowFileIO {
 
     public static void save(Workflow w, File f) throws IOException {
+        // try-with-resources: the file is closed automatically at the end, even if an exception happens
+        // UTF-8: so names with other languages (e.g. 炒飯) are saved and loaded back the same
         try (PrintWriter out = new PrintWriter(f, StandardCharsets.UTF_8)) {
             out.println("# TaskWeave workflow");
             for (Task t : w.getTasks()) {
@@ -41,6 +43,8 @@ public class WorkflowFileIO {
                 try {
                     w.addTask(parseLine(line));
                 } catch (IllegalArgumentException e) {
+                    // add the line number to the message, so the user knows which line to fix
+                    // e.g. "Line 2: duration is not a whole number: ten"
                     throw new IllegalArgumentException("Line " + lineNo + ": " + e.getMessage());
                 }
             }
@@ -63,7 +67,9 @@ public class WorkflowFileIO {
             throw new IllegalArgumentException("expected 4 fields separated by |, found " + parts.length);
         }
         String type = parts[0].trim();
-        String name = parts[1];
+        // trim the name too: a file edited by hand may have "FIXED| Wash |5|",
+        // without trim the name would be " Wash " and "Chop|10|Wash" could not find it
+        String name = parts[1].trim();
         String duration = parts[2].trim();
 
         Task task;
@@ -80,12 +86,19 @@ public class WorkflowFileIO {
                 throw new IllegalArgumentException("unknown task type " + type);
             }
         } catch (NumberFormatException e) {
+            // parseInt throws this when the text isn't a whole number (e.g. "ten" or "2.5")
             throw new IllegalArgumentException("duration is not a whole number: " + duration);
         }
 
+        // an empty last field means the task has no prerequisites
         if (!parts[3].isBlank()) {
             for (String p : parts[3].split(",")) {
-                task.addPrerequisite(p);
+                // trim each name, so "Wash, Chop" (space after the comma) still finds "Chop"
+                String prerequisite = p.trim();
+                // skip empty parts, e.g. "Wash,,Chop" or a comma at the end "Wash,"
+                if (!prerequisite.isEmpty()) {
+                    task.addPrerequisite(prerequisite);
+                }
             }
         }
         return task;
